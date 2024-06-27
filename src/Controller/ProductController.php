@@ -16,8 +16,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 class ProductController extends AbstractController
 {
-    private $entityManager;
-    private $productRepository;
+    private EntityManagerInterface $entityManager;
+    private ProductRepository $productRepository;
 
     public function __construct(EntityManagerInterface $entityManager, ProductRepository $productRepository)
     {
@@ -40,27 +40,52 @@ class ProductController extends AbstractController
     public function create(Request $request, ValidatorInterface $validator): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-
+    
+        if (!$data || !is_array($data)) {
+            return $this->json(['message' => 'Invalid JSON body'], 400);
+        }
+    
         $product = new Product();
-        $product->setName($data['name']);
-        $product->setDescription($data['description']);
-        $product->setPrice($data['price']);
-
+    
+        // Set name if it exists and is a string
+        if (isset($data['name']) && is_string($data['name'])) {
+            $product->setName($data['name']);
+        }
+    
+        if ($data['description'] === null || is_string($data['description'])) {
+            // Handle the case where $data['description'] is null or a string
+            $product->setDescription($data['description']);
+        } else {
+            // Handle the case where $data['description'] is neither null nor a string
+            return $this->json(['message' => 'Description must be a string or null'], 400);
+        }        
+    
+        // Set price if it exists and is a string
+        if (isset($data['price']) && is_string($data['price'])) {
+            $product->setPrice($data['price']);
+        }
+    
+        // Validate the product entity
         $errors = $validator->validate($product);
         if (count($errors) > 0) {
             return $this->json($errors, 400);
         }
-
-        $this->entityManager->persist($product);
-        $this->entityManager->flush();
-
+    
+        // Persist and flush the product entity
+        try {
+            $this->entityManager->persist($product);
+            $this->entityManager->flush();
+        } catch (\Exception $e) {
+            return $this->json(['message' => 'Failed to create product', 'error' => $e->getMessage()], 500);
+        }
+    
         return $this->json($product, 201);
     }
 
     /**
      * @Route("/{id}", methods={"GET"})
      */
-    public function show($id): JsonResponse
+    public function show(int $id): JsonResponse
     {
         $product = $this->productRepository->find($id);
         if (!$product) {
@@ -73,24 +98,41 @@ class ProductController extends AbstractController
     /**
      * @Route("/{id}", methods={"PUT"})
      */
-    public function update($id, Request $request, ValidatorInterface $validator): JsonResponse
+    public function update(int $id, Request $request, ValidatorInterface $validator): JsonResponse
     {
         $product = $this->productRepository->find($id);
         if (!$product) {
             return $this->json(['message' => 'Product not found'], 404);
         }
 
+        // Attempt to decode the JSON request body
         $data = json_decode($request->getContent(), true);
-        $product->setName($data['name']);
-        $product->setDescription($data['description']);
-        $product->setPrice($data['price']);
 
-        $errors = $validator->validate($product);
-        if (count($errors) > 0) {
-            return $this->json($errors, 400);
+        if (is_array($data)) {
+            if (array_key_exists('name', $data)) {
+                $product->setName($data['name']);
+            }
+            if (array_key_exists('description', $data)) {
+                $product->setDescription($data['description']);
+            }
+            if (array_key_exists('price', $data)) {
+                $product->setPrice($data['price']);
+            }
+        } else {
+            return $this->json(['message' => 'Invalid JSON body'], 400);
         }
 
-        $this->entityManager->flush();
+        // Validate the updated product entity
+        $errors = $validator->validate($product);
+        if (count($errors) > 0) {
+            return $this->json(['message' => 'Validation errors', 'errors' => $errors], 400);
+        }
+
+        try {
+            $this->entityManager->flush();
+        } catch (\Exception $e) {
+            return $this->json(['message' => 'Failed to update product', 'error' => $e->getMessage()], 500);
+        }
 
         return $this->json($product);
     }
@@ -98,7 +140,7 @@ class ProductController extends AbstractController
     /**
      * @Route("/{id}", methods={"DELETE"})
      */
-    public function delete($id): JsonResponse
+    public function delete(int $id): JsonResponse
     {
         $product = $this->productRepository->find($id);
         if (!$product) {
