@@ -10,10 +10,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Routing\Annotation\Route as RouteAttribute;
 
-/**
- * @Route("/api/products")
- */
+#[RouteAttribute('/api/products')]
 class ProductController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
@@ -25,18 +24,14 @@ class ProductController extends AbstractController
         $this->productRepository = $productRepository;
     }
 
-    /**
-     * @Route("", methods={"GET"})
-     */
+    #[RouteAttribute('', methods: ['GET'])]
     public function index(): JsonResponse
     {
         $products = $this->productRepository->findAll();
         return $this->json($products);
     }
 
-    /**
-     * @Route("", methods={"POST"})
-     */
+    #[RouteAttribute('', methods: ['POST'])]
     public function create(Request $request, ValidatorInterface $validator): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -82,9 +77,7 @@ class ProductController extends AbstractController
         return $this->json($product, 201);
     }
 
-    /**
-     * @Route("/{id}", methods={"GET"})
-     */
+    #[RouteAttribute('/{id}', methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
         $product = $this->productRepository->find($id);
@@ -95,9 +88,7 @@ class ProductController extends AbstractController
         return $this->json($product);
     }
 
-    /**
-     * @Route("/{id}", methods={"PUT"})
-     */
+    #[RouteAttribute('/{id}', methods: ['PUT'])]
     public function update(int $id, Request $request, ValidatorInterface $validator): JsonResponse
     {
         $product = $this->productRepository->find($id);
@@ -136,9 +127,7 @@ class ProductController extends AbstractController
         return $this->json($product);
     }
 
-    /**
-     * @Route("/{id}", methods={"DELETE"})
-     */
+    #[RouteAttribute('/{id}', methods: ['DELETE'])]
     public function delete(int $id): JsonResponse
     {
         $product = $this->productRepository->find($id);
