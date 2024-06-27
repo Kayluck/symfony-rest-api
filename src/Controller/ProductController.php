@@ -105,7 +105,6 @@ class ProductController extends AbstractController
             return $this->json(['message' => 'Product not found'], 404);
         }
 
-        // Attempt to decode the JSON request body
         $data = json_decode($request->getContent(), true);
 
         if (is_array($data)) {
