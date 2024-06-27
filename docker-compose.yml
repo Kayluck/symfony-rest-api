@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "9000:9000"
+    volumes:
+      - .:/var/www/html
+    environment:
+      DATABASE_URL: mysql://app:!root!@127.0.0.1:3306/rest_api_symfony
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: 
+      MYSQL_DATABASE: rest_api_symfony
+    ports:
+      - "3306:3306"
