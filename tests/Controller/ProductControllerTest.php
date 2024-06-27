@@ -21,7 +21,8 @@ class ProductControllerTest extends WebTestCase
         ]));
 
         $response = $this->client->getResponse();
-        $data = json_decode($response->getContent(), true);
+        $content = $response->getContent();
+        $data = json_decode($content, true);
 
         // Debug the response content
         if ($response->getStatusCode() !== 200) {
