@@ -38,7 +38,11 @@
     ```bash
     docker-compose exec app vendor/bin/phpcs
 
-
 ## Assumptions
 The database uses MySQL.
 The application is running in a Docker container.
+
+## Tests
+To test the code
+   ```bash
+   php bin/phpunit
